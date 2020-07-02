@@ -42,6 +42,7 @@ config () {
   cat $FILENAME | jq -r ".purchased[] | select(.symbol == \"$1\") | .$2"
 }
 
+sum=0.0
 for symbol in $(echo $symbols | sed "s/,/ /g"); do
   marketState="$(query $symbol 'marketState')"
 
@@ -86,12 +87,16 @@ for symbol in $(echo $symbols | sed "s/,/ /g"); do
   shares=$( config $symbol 'shares')
   profit_per_share=$(awk "BEGIN {print $price - $bought_at}") # profit per share
   total_profit=$(awk "BEGIN {print $profit_per_share * $shares}")
+  sum=$(awk "BEGIN {print $sum + $total_profit}")
 
   if [ "$price" != "null" ]; then
-    printf "%-10s$COLOR_BOLD%8.2f$COLOR_RESET" $symbol $price
+    printf "%-5s%-5d$COLOR_BOLD%8.2f$COLOR_RESET" $symbol $shares $price
     printf "$color%10.2f%12s$COLOR_RESET" $diff $(printf "(%.2f%%)" $percent)
     printf " %s " "$nonRegularMarketSign"
     printf " %10.2f" $profit_per_share 
     printf " %10.2f\n" $total_profit
   fi
 done
+
+printf '====================================================================\n'
+printf "NET PROFIT (US$):\t\t\t\t\t%10.2f\n" $sum
