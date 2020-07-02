@@ -1,0 +1,24 @@
+{
+  "purchased": [
+    {
+      "symbol": "AAPL",
+      "shares": 150,
+      "at": 300.17
+    },
+    {
+      "symbol": "NET",
+      "shares": 100,
+      "at": 32.39
+    },
+    {
+      "symbol": "MSFT",
+      "shares": 200,
+      "at": 153.73
+    },
+    {
+      "symbol": "PYPL",
+      "shares": 200,
+      "at": 164.5398
+    }
+  ]
+}

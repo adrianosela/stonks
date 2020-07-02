@@ -4,21 +4,22 @@ set -e
 LANG=C
 LC_NUMERIC=C
 
-SYMBOLS=("$@")
+FILENAME="$1"
 
 if ! $(type jq > /dev/null 2>&1); then
   echo "'jq' is not in the PATH. (See: https://stedolan.github.io/jq/)"
   exit 1
 fi
 
-if [ -z "$SYMBOLS" ]; then
-  echo "Usage: ./ticker.sh AAPL MSFT GOOG BTC-USD"
+if [ -z "$FILENAME" ]; then
+  echo "Usage: ./ticker.sh config.json"
   exit
 fi
 
 FIELDS=(symbol marketState regularMarketPrice regularMarketChange regularMarketChangePercent \
   preMarketPrice preMarketChange preMarketChangePercent postMarketPrice postMarketChange postMarketChangePercent)
 API_ENDPOINT="https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com"
+CONFIG_FILENAME="./config.json"
 
 if [ -z "$NO_COLOR" ]; then
   : "${COLOR_BOLD:=\e[1;37m}"
@@ -27,7 +28,7 @@ if [ -z "$NO_COLOR" ]; then
   : "${COLOR_RESET:=\e[00m}"
 fi
 
-symbols=$(IFS=,; echo "${SYMBOLS[*]}")
+symbols=$(cat $FILENAME | jq -r '.purchased[].symbol' | paste -sd, -)
 fields=$(IFS=,; echo "${FIELDS[*]}")
 
 results=$(curl --silent "$API_ENDPOINT&fields=$fields&symbols=$symbols" \
@@ -37,7 +38,11 @@ query () {
   echo $results | jq -r ".[] | select(.symbol == \"$1\") | .$2"
 }
 
-for symbol in $(IFS=' '; echo "${SYMBOLS[*]}" | tr '[:lower:]' '[:upper:]'); do
+config () {
+  cat $FILENAME | jq -r ".purchased[] | select(.symbol == \"$1\") | .$2"
+}
+
+for symbol in $(echo $symbols | sed "s/,/ /g"); do
   marketState="$(query $symbol 'marketState')"
 
   if [ -z $marketState ]; then
@@ -77,9 +82,16 @@ for symbol in $(IFS=' '; echo "${SYMBOLS[*]}" | tr '[:lower:]' '[:upper:]'); do
     color=$COLOR_GREEN
   fi
 
+  bought_at=$( config $symbol 'at')
+  shares=$( config $symbol 'shares')
+  profit_per_share=$(awk "BEGIN {print $price - $bought_at}") # profit per share
+  total_profit=$(awk "BEGIN {print $profit_per_share * $shares}")
+
   if [ "$price" != "null" ]; then
     printf "%-10s$COLOR_BOLD%8.2f$COLOR_RESET" $symbol $price
     printf "$color%10.2f%12s$COLOR_RESET" $diff $(printf "(%.2f%%)" $percent)
-    printf " %s\n" "$nonRegularMarketSign"
+    printf " %s " "$nonRegularMarketSign"
+    printf " %10.2f" $profit_per_share 
+    printf " %10.2f\n" $total_profit
   fi
 done
