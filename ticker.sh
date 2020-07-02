@@ -59,21 +59,21 @@ for symbol in $(echo $symbols | sed "s/,/ /g"); do
     && [ $preMarketChange != "null" ]; then
     nonRegularMarketSign='*'
     price=$(query $symbol 'preMarketPrice')
-    diff=$preMarketChange
-    percent=$(query $symbol 'preMarketChangePercent')
   elif [ $marketState != "REGULAR" ] \
     && [ $postMarketChange != "0" ] \
     && [ $postMarketChange != "null" ]; then
     nonRegularMarketSign='*'
     price=$(query $symbol 'postMarketPrice')
-    diff=$postMarketChange
-    percent=$(query $symbol 'postMarketChangePercent')
   else
     nonRegularMarketSign=''
     price=$(query $symbol 'regularMarketPrice')
-    diff=$(query $symbol 'regularMarketChange')
-    percent=$(query $symbol 'regularMarketChangePercent')
   fi
+
+  bought_at=$( config $symbol 'at')
+  shares=$( config $symbol 'shares')
+  profit_per_share=$(awk "BEGIN {print $price - $bought_at}") # profit per share
+  diff=$(awk "BEGIN {print $profit_per_share * $shares}")
+  sum=$(awk "BEGIN {print $sum + $diff}")
 
   if [ "$diff" == "0" ]; then
     color=
@@ -83,20 +83,14 @@ for symbol in $(echo $symbols | sed "s/,/ /g"); do
     color=$COLOR_GREEN
   fi
 
-  bought_at=$( config $symbol 'at')
-  shares=$( config $symbol 'shares')
-  profit_per_share=$(awk "BEGIN {print $price - $bought_at}") # profit per share
-  total_profit=$(awk "BEGIN {print $profit_per_share * $shares}")
-  sum=$(awk "BEGIN {print $sum + $total_profit}")
-
   if [ "$price" != "null" ]; then
-    printf "%-5s%-5d$COLOR_BOLD%8.2f$COLOR_RESET" $symbol $shares $price
-    printf "$color%10.2f%12s$COLOR_RESET" $diff $(printf "(%.2f%%)" $percent)
-    printf " %s " "$nonRegularMarketSign"
-    printf " %10.2f" $profit_per_share 
-    printf " %10.2f\n" $total_profit
+    printf "%-5s%-5d @ $%.2f$COLOR_BOLD\t%.2f$COLOR_RESET" $symbol $shares $bought_at $price
+    printf "\t%s" "$nonRegularMarketSign"
+    printf "$color%10.2f" $profit_per_share 
+    printf "$color%10.2f$COLOR_RESET\n" $diff
   fi
 done
 
-printf '====================================================================\n'
-printf "NET PROFIT (US$):\t\t\t\t\t%10.2f\n" $sum
+printf '======================================================\n'
+printf "NET PROFIT (US$):\t\t\t\t %4.2f\n" $sum
+
