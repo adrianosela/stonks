@@ -92,5 +92,5 @@ for symbol in $(echo $symbols | sed "s/,/ /g"); do
 done
 
 printf '======================================================\n'
-printf "NET PROFIT (US$):\t\t\t\t %4.2f\n" $sum
+printf "NET PROFIT (US$): %35.2f\n" $sum
 
