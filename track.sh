@@ -1,25 +1,38 @@
 #!/usr/bin/env bash
+
 set -e
 
-LANG=C
-LC_NUMERIC=C
-
-FILENAME="$1"
-
 if ! $(type jq > /dev/null 2>&1); then
-  echo "'jq' is not in the PATH. (See: https://stedolan.github.io/jq/)"
+  echo "'jq' executable not found"
   exit 1
 fi
 
+if ! $(type awk > /dev/null 2>&1); then
+  echo "'awk' executable not found"
+  exit 1
+fi
+
+FILENAME="$1"
 if [ -z "$FILENAME" ]; then
-  echo "Usage: ./ticker.sh config.json"
+  echo "Usage: ./stock.sh config.json"
   exit
 fi
 
-FIELDS=(symbol marketState regularMarketPrice regularMarketChange regularMarketChangePercent \
-  preMarketPrice preMarketChange preMarketChangePercent postMarketPrice postMarketChange postMarketChangePercent)
 API_ENDPOINT="https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com"
-CONFIG_FILENAME="./config.json"
+
+FIELDS=(
+symbol
+marketState
+regularMarketPrice
+regularMarketChange
+regularMarketChangePercent
+preMarketPrice
+preMarketChange
+preMarketChangePercent
+postMarketPrice
+postMarketChange
+postMarketChangePercent
+)
 
 if [ -z "$NO_COLOR" ]; then
   : "${COLOR_BOLD:=\e[1;37m}"
@@ -31,8 +44,7 @@ fi
 symbols=$(cat $FILENAME | jq -r '.purchased[].symbol' | paste -sd, -)
 fields=$(IFS=,; echo "${FIELDS[*]}")
 
-results=$(curl --silent "$API_ENDPOINT&fields=$fields&symbols=$symbols" \
-  | jq '.quoteResponse .result')
+results=$(curl -s "$API_ENDPOINT&fields=$fields&symbols=$symbols" | jq '.quoteResponse .result')
 
 query () {
   echo $results | jq -r ".[] | select(.symbol == \"$1\") | .$2"
