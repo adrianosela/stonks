@@ -96,7 +96,7 @@ for symbol in $(echo $symbols | sed "s/,/ /g"); do
   fi
 
   if [ "$price" != "null" ]; then
-    printf "%-6s%-6d @ $%-8.4f$COLOR_BOLD\t%-8.4f$COLOR_RESET" $symbol $shares $bought_at $price
+    printf "%-6s %-6d @ $%-8.4f$COLOR_BOLD\t%-8.4f$COLOR_RESET" $symbol $shares $bought_at $price
     printf "\t%-8s" "$nonRegularMarketSign"
     printf "$color%-8.2f" $profit_per_share 
     printf "$color%-8.2f$COLOR_RESET\n" $diff
