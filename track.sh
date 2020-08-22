@@ -96,13 +96,13 @@ for symbol in $(echo $symbols | sed "s/,/ /g"); do
   fi
 
   if [ "$price" != "null" ]; then
-    printf "%-5s%-5d @ $%.2f$COLOR_BOLD\t%.2f$COLOR_RESET" $symbol $shares $bought_at $price
-    printf "\t%s" "$nonRegularMarketSign"
-    printf "$color%10.2f" $profit_per_share 
-    printf "$color%10.2f$COLOR_RESET\n" $diff
+    printf "%-6s%-6d @ $%-8.4f$COLOR_BOLD\t%-8.4f$COLOR_RESET" $symbol $shares $bought_at $price
+    printf "\t%-8s" "$nonRegularMarketSign"
+    printf "$color%-8.2f" $profit_per_share 
+    printf "$color%-8.2f$COLOR_RESET\n" $diff
   fi
 done
 
-printf '======================================================\n'
-printf "NET PROFIT (US$): %35.2f\n" $sum
+printf '=========================================================================\n'
+printf "NET PROFIT (US$): %55.2f\n" $sum
 
